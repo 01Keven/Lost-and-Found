@@ -4,18 +4,37 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Collider))]
 public class InteractableDeskItem : MonoBehaviour
 {
-    public string itemID; // Ex: "id_ze", "relogio_ouro"
+    public string itemID;
     
+    [Header("Limites da Mesa ")]
+    [Tooltip("impedir que o item caia da mesa")]
+    public float minX = -3f;
+    public float maxX = 3f;
+    public float minZ = -2f;
+    public float maxZ = 2f;
+
+    private float lockedYHeight;
     private Vector3 offset;
-    private float zCoord;
+    private Plane deskPlane;
     private bool isDragging = false;
 
-    // Detecta o clique esquerdo para arrastar
     private void OnMouseDown()
     {
-        zCoord = Camera.main.WorldToScreenPoint(gameObject.transform.position).z;
-        offset = gameObject.transform.position - GetMouseAsWorldPoint();
         isDragging = true;
+        
+        // 1. Salva a altura inicial exata do objeto (Eixo Y) para não deixá-lo flutuar
+        lockedYHeight = transform.position.y;
+        
+        // 2. Cria um plano matemático invisível virado para cima, exatamente na altura do item
+        deskPlane = new Plane(Vector3.up, new Vector3(0, lockedYHeight, 0));
+        
+        // 3. Calcula a diferença entre onde o mouse clicou e o centro do objeto
+        Ray ray = Camera.main.ScreenPointToRay(GetMouseScreenPosition());
+        if (deskPlane.Raycast(ray, out float distance))
+        {
+            Vector3 hitPoint = ray.GetPoint(distance);
+            offset = transform.position - hitPoint;
+        }
     }
 
     private void OnMouseUp()
@@ -25,13 +44,28 @@ public class InteractableDeskItem : MonoBehaviour
 
     private void OnMouseDrag()
     {
-        transform.position = GetMouseAsWorldPoint() + offset;
+        // 4. Lança um raio da câmera até o mouse
+        Ray ray = Camera.main.ScreenPointToRay(GetMouseScreenPosition());
+        
+        // 5. Verifica onde o raio intercepta o plano da mesa
+        if (deskPlane.Raycast(ray, out float distance))
+        {
+            Vector3 targetPos = ray.GetPoint(distance) + offset;
+            
+            // 6. Trava a altura (Y) para o valor inicial
+            targetPos.y = lockedYHeight;
+            
+            // 7. Trava o movimento lateral (X) e profundidade (Z) dentro dos limites da mesa
+            targetPos.x = Mathf.Clamp(targetPos.x, minX, maxX);
+            targetPos.z = Mathf.Clamp(targetPos.z, minZ, maxZ);
+            
+            // 8. Aplica a posição final corrigida
+            transform.position = targetPos;
+        }
     }
 
-    // O Update checa o botão direito para inspecionar, mas só se o mouse estiver sobre o objeto
     private void OnMouseOver()
     {
-        // Verifica se há um mouse conectado e se o botão direito foi pressionado neste frame
         if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame) 
         {
             InspectItem();
@@ -41,16 +75,10 @@ public class InteractableDeskItem : MonoBehaviour
     private void InspectItem()
     {
         Debug.Log($"Inspecionando detalhadamente o item: {itemID}");
-        // Aqui você aciona um evento para abrir a UI de Inspeção.
-        // Exemplo: InspectionUI.Instance.ShowDetails(this);
     }
 
-    private Vector3 GetMouseAsWorldPoint()
+    private Vector2 GetMouseScreenPosition()
     {
-        // Lê a posição do mouse usando o New Input System
-        Vector2 mouseScreenPos = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
-        
-        Vector3 mousePoint = new Vector3(mouseScreenPos.x, mouseScreenPos.y, zCoord);
-        return Camera.main.ScreenToWorldPoint(mousePoint);
+        return Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
     }
 }
