@@ -6,6 +6,8 @@ public class InteractableDeskItem : MonoBehaviour
 {
     public string itemID;
     
+    public Sprite inspectImage2D;
+
     [Header("Limites da Mesa ")]
     [Tooltip("impedir que o item caia da mesa")]
     public float minX = -3f;
@@ -68,6 +70,10 @@ public class InteractableDeskItem : MonoBehaviour
     {
         if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame) 
         {
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.OpenItemContextMenu(this);
+            }
             InspectItem();
         }
     }
