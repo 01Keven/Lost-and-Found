@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
@@ -8,10 +9,19 @@ public class UIManager : MonoBehaviour
     [Header("Identidade e Turno")]
     public GameObject askIdButton; 
     private NpcController currentNpc;
+    public bool hasReturnedID = false; // Controle de estado da devolução
 
     [Header("Interação de Itens")]
-    public GameObject itemContextMenu; // O painelzinho com os 2 botões
-    public DraggableInspectUI inspectUIWindow; // A janela de inspeção que criamos
+    public GameObject itemContextMenu;
+    public DraggableInspectUI inspectUIWindow; 
+    public Transform deskItemSpawnPoint; // Ponto central da mesa para onde os itens da prateleira vão
+
+    [Header("Botões do Menu de Contexto")]
+    public GameObject btnInspect;
+    public GameObject btnPutOnTable;
+    public GameObject btnReturnToShelf;
+    public GameObject btnGiveBack;
+    public GameObject btnDismissNpc;
 
     private InteractableDeskItem currentHoveredItem;
 
@@ -22,13 +32,15 @@ public class UIManager : MonoBehaviour
         
         if (askIdButton != null) askIdButton.SetActive(false);
         if (itemContextMenu != null) itemContextMenu.SetActive(false);
-        if (inspectUIWindow != null) inspectUIWindow.gameObject.SetActive(false);
     }
 
     public void ShowAskIdButton(NpcController npc)
     {
         currentNpc = npc;
+        hasReturnedID = false;
+        
         if (askIdButton != null) askIdButton.SetActive(true);
+        if (btnDismissNpc != null) btnDismissNpc.SetActive(false); // Esconde ao iniciar
     }
 
     public void OnAskIdClicked()
@@ -40,47 +52,96 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // ---- NOVAS FUNÇÕES PARA OS ITENS DA MESA ----
-
     public void OpenItemContextMenu(InteractableDeskItem item)
     {
         currentHoveredItem = item;
         itemContextMenu.SetActive(true);
         
-        // Posiciona o menu no local exato do mouse na tela
-        if (Mouse.current != null)
+        if (Mouse.current != null) itemContextMenu.transform.position = Mouse.current.position.ReadValue();
+
+        // Configura quais botões aparecem baseados no estado do item
+        btnInspect.SetActive(true);
+        
+        if (item.currentLocation == InteractableDeskItem.ItemLocation.OnShelf)
         {
-            itemContextMenu.transform.position = Mouse.current.position.ReadValue();
+            btnPutOnTable.SetActive(true);
+            btnReturnToShelf.SetActive(false);
+            btnGiveBack.SetActive(false);
+        }
+        else if (item.currentLocation == InteractableDeskItem.ItemLocation.OnDesk)
+        {
+            btnPutOnTable.SetActive(false);
+            
+            // Só pode devolver pra prateleira se for um objeto 3D
+            btnReturnToShelf.SetActive(item.itemType == InteractableDeskItem.ItemType.Object3D);
+            
+            // Se for identidade, "Give Back" sempre aparece. Se for item 3D, depende de já ter devolvido a ID.
+            if (item.itemType == InteractableDeskItem.ItemType.Document2D)
+                btnGiveBack.SetActive(true);
+            else
+                btnGiveBack.SetActive(hasReturnedID);
         }
     }
 
-    // Vincule esta função ao evento OnClick do botão "Inspect"
+    // --- FUNÇÕES DOS BOTÕES DO MENU DE CONTEXTO ---
+
     public void OnInspectButtonClicked()
     {
         itemContextMenu.SetActive(false);
+        if (currentHoveredItem == null) return;
 
-        if (currentHoveredItem != null)
+        if (currentHoveredItem.itemType == InteractableDeskItem.ItemType.Document2D)
         {
-            // Oculta o objeto 3D
             currentHoveredItem.gameObject.SetActive(false);
-            
-            // Abre a janela de UI 2D passando o item como referência
-            inspectUIWindow.Show(currentHoveredItem);
+            inspectUIWindow.Show(currentHoveredItem); // Abre UI 2D
+        }
+        else
+        {
+            currentHoveredItem.Start3DInspection(); // Puxa pra câmera
         }
     }
 
-    // Vincule esta função ao evento OnClick do botão "Give Back"
+    public void OnPutOnTableButtonClicked()
+    {
+        itemContextMenu.SetActive(false);
+        if (currentHoveredItem != null) currentHoveredItem.MoveToDesk(deskItemSpawnPoint);
+    }
+
+    public void OnReturnToShelfButtonClicked()
+    {
+        itemContextMenu.SetActive(false);
+        if (currentHoveredItem != null) currentHoveredItem.ReturnToShelf();
+    }
+
     public void OnGiveBackButtonClicked()
     {
         itemContextMenu.SetActive(false);
+        if (currentHoveredItem == null) return;
 
-        if (currentHoveredItem != null)
+        if (currentHoveredItem.itemType == InteractableDeskItem.ItemType.Document2D)
         {
-            Debug.Log($"Devolvendo {currentHoveredItem.itemID} para o NPC. Transição de estado encaminhada.");
+            hasReturnedID = true; 
             
-            // Aqui entra a lógica futura de escolher o item.
-            // Por enquanto, destruímos o objeto para limpar a mesa.
+            // Mostra o botão de expulsar o NPC agora que a identidade foi checada e devolvida
+            if (btnDismissNpc != null) btnDismissNpc.SetActive(true);
+            
             Destroy(currentHoveredItem.gameObject);
+        }
+        else
+        {
+            // O NPC recebe o item 3D
+            currentNpc.ReceiveItem(currentHoveredItem.itemID);
+            if (btnDismissNpc != null) btnDismissNpc.SetActive(false); // Esconde a UI
+            Destroy(currentHoveredItem.gameObject);
+        }
+    }
+
+    public void OnDismissNpcClicked()
+    {
+        if (currentNpc != null)
+        {
+            currentNpc.RefuseAndDismiss();
+            btnDismissNpc.SetActive(false); // Esconde após usar
         }
     }
 }

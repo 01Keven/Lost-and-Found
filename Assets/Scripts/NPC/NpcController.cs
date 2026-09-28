@@ -50,22 +50,49 @@ public class NpcController : MonoBehaviour
         }
     }
     
+    // ... (Mantenha o Start, a Corrotina e o AskForID do script anterior) ...
+
+    // Chamado pelo UIManager quando o jogador entrega um item 3D da mesa
     public void ReceiveItem(string givenItemID)
     {
-        bool isCorrect = (givenItemID == myData.correctItemID);
-        
-        RegisterDelivery(myData.npcName, givenItemID, isCorrect);
-        
-        if (isCorrect)
+        if (myData.isScammer)
         {
-            Debug.Log($"[{myData.npcName}]: Era isso mesmo, obrigado!");
+            // Entregou algo para quem queria roubar: ERRO
+            ScoreManager.Instance.RegisterAction(false, $"Entregou {givenItemID} para o GOLPISTA {myData.npcName}.");
+        }
+        else if (givenItemID == myData.correctItemID)
+        {
+            // Entregou o item certo: ACERTO
+            ScoreManager.Instance.RegisterAction(true, $"Entregou {givenItemID} corretamente para {myData.npcName}.");
         }
         else
         {
-            Debug.Log($"[{myData.npcName}]: Ah... certo. Vou levar isso. Obrigado.");
+            // Entregou o item errado: ERRO
+            ScoreManager.Instance.RegisterAction(false, $"Entregou item errado ({givenItemID}) para {myData.npcName} (Esperava {myData.correctItemID}).");
         }
 
-        Object.FindAnyObjectByType<CycleManager>().StartCycle();
+        // Passa para o próximo NPC
+        FindObjectOfType<CycleManager>().StartCycle();
+    }
+
+    // Nova função: Chamada quando o jogador diz "Você não perdeu nada, vá embora"
+    public void RefuseAndDismiss()
+    {
+        if (myData.isScammer)
+        {
+            // Mandou o golpista embora de mãos vazias: ACERTO
+            ScoreManager.Instance.RegisterAction(true, $"Identificou o golpista {myData.npcName} e o mandou embora.");
+            
+            // FUTURO: Aqui entrará o evento de "Typing QTE" se o golpista tentar pegar o item à força
+        }
+        else
+        {
+            // Mandou embora alguém que realmente tinha um item: ERRO
+            ScoreManager.Instance.RegisterAction(false, $"Recusou ajudar o NPC legítimo {myData.npcName}. Ele foi embora triste.");
+        }
+
+        // Passa para o próximo NPC
+        FindObjectOfType<CycleManager>().StartCycle();
     }
 
     private void RegisterDelivery(string npc, string item, bool success)

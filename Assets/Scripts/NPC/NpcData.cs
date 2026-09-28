@@ -6,9 +6,13 @@ public class NpcData : ScriptableObject
     public string npcName;
     [TextArea] public string initialDialogue;
     
-    [Header("Objetivos")]
-    public string correctItemID; // O ID do item que ele realmente perdeu (ex: "relogio_ouro")
+    [Header("Objetivos & Golpistas")]
+    [Tooltip("Marque como TRUE se este NPC não perdeu nada e só quer roubar itens")]
+    public bool isScammer; 
+    
+    [Tooltip("O ID do item correto. Deixe vazio se for um golpista.")]
+    public string correctItemID; 
     
     [Header("Documentos")]
-    public GameObject idCardPrefab; // O prefab 3D/2D da identidade que vai cair na mesa
+    public GameObject idCardPrefab;
 }
