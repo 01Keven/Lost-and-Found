@@ -57,42 +57,34 @@ public class NpcController : MonoBehaviour
     {
         if (myData.isScammer)
         {
-            // Entregou algo para quem queria roubar: ERRO
             ScoreManager.Instance.RegisterAction(false, $"Entregou {givenItemID} para o GOLPISTA {myData.npcName}.");
         }
         else if (givenItemID == myData.correctItemID)
         {
-            // Entregou o item certo: ACERTO
             ScoreManager.Instance.RegisterAction(true, $"Entregou {givenItemID} corretamente para {myData.npcName}.");
         }
         else
         {
-            // Entregou o item errado: ERRO
             ScoreManager.Instance.RegisterAction(false, $"Entregou item errado ({givenItemID}) para {myData.npcName} (Esperava {myData.correctItemID}).");
         }
 
-        // Passa para o próximo NPC
-        FindObjectOfType<CycleManager>().StartCycle();
+        // Avisa ao Manager que este NPC terminou e a mesa está livre
+        Object.FindAnyObjectByType<CycleManager>().FinishCurrentNpc();
     }
 
-    // Nova função: Chamada quando o jogador diz "Você não perdeu nada, vá embora"
     public void RefuseAndDismiss()
     {
         if (myData.isScammer)
         {
-            // Mandou o golpista embora de mãos vazias: ACERTO
             ScoreManager.Instance.RegisterAction(true, $"Identificou o golpista {myData.npcName} e o mandou embora.");
-            
-            // FUTURO: Aqui entrará o evento de "Typing QTE" se o golpista tentar pegar o item à força
         }
         else
         {
-            // Mandou embora alguém que realmente tinha um item: ERRO
             ScoreManager.Instance.RegisterAction(false, $"Recusou ajudar o NPC legítimo {myData.npcName}. Ele foi embora triste.");
         }
 
-        // Passa para o próximo NPC
-        FindObjectOfType<CycleManager>().StartCycle();
+        // Avisa ao Manager que este NPC terminou e a mesa está livre
+        Object.FindAnyObjectByType<CycleManager>().FinishCurrentNpc();
     }
 
     private void RegisterDelivery(string npc, string item, bool success)

@@ -52,6 +52,14 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    // 1. Adicione esta nova função em qualquer lugar do seu UIManager
+    public void ClearNpcState()
+    {
+        currentNpc = null;
+        hasReturnedID = false; // Reseta a permissão de entregar itens
+    }
+
+    // 2. Substitua a sua função OpenItemContextMenu atual por esta versão:
     public void OpenItemContextMenu(InteractableDeskItem item)
     {
         currentHoveredItem = item;
@@ -59,7 +67,6 @@ public class UIManager : MonoBehaviour
         
         if (Mouse.current != null) itemContextMenu.transform.position = Mouse.current.position.ReadValue();
 
-        // Configura quais botões aparecem baseados no estado do item
         btnInspect.SetActive(true);
         
         if (item.currentLocation == InteractableDeskItem.ItemLocation.OnShelf)
@@ -71,18 +78,22 @@ public class UIManager : MonoBehaviour
         else if (item.currentLocation == InteractableDeskItem.ItemLocation.OnDesk)
         {
             btnPutOnTable.SetActive(false);
-            
-            // Só pode devolver pra prateleira se for um objeto 3D
             btnReturnToShelf.SetActive(item.itemType == InteractableDeskItem.ItemType.Object3D);
             
-            // Se for identidade, "Give Back" sempre aparece. Se for item 3D, depende de já ter devolvido a ID.
+            // TRAVA DE SEGURANÇA: Verifica se existe alguém no balcão
+            bool isNpcAtDesk = (currentNpc != null);
+
             if (item.itemType == InteractableDeskItem.ItemType.Document2D)
-                btnGiveBack.SetActive(true);
+            {
+                btnGiveBack.SetActive(isNpcAtDesk); // Identidade só volta se tiver NPC
+            }
             else
-                btnGiveBack.SetActive(hasReturnedID);
+            {
+                // Item 3D só é entregue se tiver NPC E a identidade já tiver sido devolvida
+                btnGiveBack.SetActive(isNpcAtDesk && hasReturnedID);
+            }
         }
     }
-
     // --- FUNÇÕES DOS BOTÕES DO MENU DE CONTEXTO ---
 
     public void OnInspectButtonClicked()
@@ -141,7 +152,10 @@ public class UIManager : MonoBehaviour
         if (currentNpc != null)
         {
             currentNpc.RefuseAndDismiss();
-            btnDismissNpc.SetActive(false); // Esconde após usar
+            
+            // Esconde os elementos da UI após o uso
+            btnDismissNpc.SetActive(false); 
+            itemContextMenu.SetActive(false); // Garante que o menu do item fecha para evitar cliques fantasmas
         }
     }
 }

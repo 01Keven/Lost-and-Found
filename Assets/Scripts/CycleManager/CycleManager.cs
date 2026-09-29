@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class CycleManager : MonoBehaviour
 {
@@ -14,49 +13,56 @@ public class CycleManager : MonoBehaviour
 
     [Header("Configuração dos Ciclos")]
     public List<CycleData> cycles;
-    public Transform npcSpawnPoint; // Referência para o ponto atrás do balcão
+    public Transform npcSpawnPoint; 
 
     private int currentCycleIndex = 0;
     private int currentNpcIndex = 0;
-    private bool isCycleActive = false;
     
-    private GameObject currentActiveNpc; // Guarda o NPC que está na tela agora
+    // Controles de estado do fluxo
+    private bool isCycleActive = false;
+    private bool isWaitingForNextNpc = false; 
+    
+    private GameObject currentActiveNpc; 
 
-    [Header("Input de Teste")]
-    public InputActionReference nextNpcAction;
-
-    private void OnEnable()
+    // Função unificada chamada pelo objeto 3D
+    public void OnStarterObjectClicked()
     {
-        if (nextNpcAction != null)
+        if (currentCycleIndex >= cycles.Count)
         {
-            nextNpcAction.action.Enable();
-            nextNpcAction.action.performed += OnNextNpcPerformed;
+            Debug.Log("DEBUG: Todos os ciclos já foram concluídos. Fim de expediente!");
+            return;
+        }
+
+        if (!isCycleActive)
+        {
+            // O ciclo não começou ainda. Inicia o período (ex: Manhã).
+            StartCycle();
+        }
+        else if (isWaitingForNextNpc)
+        {
+            // O ciclo está rolando e a mesa está livre. Chama o próximo.
+            SpawnNextNPC();
+        }
+        else
+        {
+            // O jogador clicou no objeto 3D, mas o NPC atual ainda não foi resolvido.
+            Debug.Log("DEBUG: Termine de atender o NPC atual antes de chamar o próximo!");
         }
     }
 
-    private void OnDisable()
+    private void StartCycle()
     {
-        if (nextNpcAction != null)
-        {
-            nextNpcAction.action.Disable();
-            nextNpcAction.action.performed -= OnNextNpcPerformed;
-        }
-    }
-
-    public void StartCycle()
-    {
-        if (isCycleActive || currentCycleIndex >= cycles.Count) return;
-
         isCycleActive = true;
         currentNpcIndex = 0;
-        
         Debug.Log($"DEBUG: === INICIANDO CICLO: {cycles[currentCycleIndex].cycleName.ToUpper()} ===");
         SpawnNextNPC();
     }
 
     private void SpawnNextNPC()
     {
-        // 1. Destrói o NPC anterior, se houver alguém no balcão
+        isWaitingForNextNpc = false; // A mesa agora está ocupada
+
+        // Segurança para limpar a mesa, caso o NPC anterior ainda exista
         if (currentActiveNpc != null)
         {
             Destroy(currentActiveNpc);
@@ -64,12 +70,10 @@ public class CycleManager : MonoBehaviour
 
         CycleData currentCycle = cycles[currentCycleIndex];
 
-        // 2. Verifica se ainda há NPCs na fila deste ciclo
+        // Verifica se ainda há NPCs na fila deste ciclo
         if (currentNpcIndex < currentCycle.npcPrefabs.Count)
         {
-            // 3. Pega o prefab específico da lista e cria ele no SpawnPoint
             GameObject npcToSpawn = currentCycle.npcPrefabs[currentNpcIndex];
-            
             currentActiveNpc = Instantiate(npcToSpawn, npcSpawnPoint.position, npcSpawnPoint.rotation);
             
             Debug.Log($"DEBUG: [NPC CHEGOU] Atendendo NPC {currentNpcIndex + 1} de {currentCycle.npcPrefabs.Count}.");
@@ -81,15 +85,44 @@ public class CycleManager : MonoBehaviour
         }
     }
 
-    private void OnNextNpcPerformed(InputAction.CallbackContext context)
+    // Chamado pelo NpcController quando o player entrega o item ou expulsa o NPC
+    // Chamado pelo NpcController quando o player entrega o item ou expulsa o NPC
+    public void FinishCurrentNpc()
     {
-        if (!isCycleActive) return;
-        SpawnNextNPC(); // Destrói o atual e chama o próximo
+        Debug.Log("DEBUG: Interação finalizada. O NPC foi embora. Limpando a mesa...");
+        
+        isWaitingForNextNpc = true; 
+        
+        // Destrói o NPC visualmente da cena
+        if (currentActiveNpc != null)
+        {
+            Destroy(currentActiveNpc);
+            currentActiveNpc = null;
+        }
+
+        // AVISA A UI PARA LIMPAR O ESTADO DO BALCÃO
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.ClearNpcState();
+        }
+
+        // Limpeza da Mesa: Devolve itens esquecidos para a prateleira
+        InteractableDeskItem[] allItems = FindObjectsOfType<InteractableDeskItem>();
+        foreach (InteractableDeskItem item in allItems)
+        {
+            if (item.itemType == InteractableDeskItem.ItemType.Object3D && 
+                item.currentLocation == InteractableDeskItem.ItemLocation.OnDesk)
+            {
+                item.ReturnToShelf();
+            }
+        }
     }
 
     private void EndCycle()
     {
         isCycleActive = false;
+        isWaitingForNextNpc = false;
+        
         Debug.Log($"DEBUG: === FIM DO CICLO: {cycles[currentCycleIndex].cycleName.ToUpper()} ===");
         currentCycleIndex++; 
     }
