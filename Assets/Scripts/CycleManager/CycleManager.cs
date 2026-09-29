@@ -107,7 +107,7 @@ public class CycleManager : MonoBehaviour
         }
 
         // Limpeza da Mesa: Devolve itens esquecidos para a prateleira
-        InteractableDeskItem[] allItems = FindObjectsOfType<InteractableDeskItem>();
+        InteractableDeskItem[] allItems = FindObjectsByType<InteractableDeskItem>();
         foreach (InteractableDeskItem item in allItems)
         {
             if (item.itemType == InteractableDeskItem.ItemType.Object3D && 

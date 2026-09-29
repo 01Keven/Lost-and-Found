@@ -4,7 +4,8 @@ using UnityEngine;
 public class NpcData : ScriptableObject
 {
     public string npcName;
-    [TextArea] public string initialDialogue;
+    [Header("Narrativa")]
+    public DialogueNode startingNode; // O node que puxa toda a árvore de conversa inicial
     
     [Header("Objetivos & Golpistas")]
     [Tooltip("Marque como TRUE se este NPC não perdeu nada e só quer roubar itens")]
