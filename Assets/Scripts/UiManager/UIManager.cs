@@ -34,13 +34,37 @@ public class UIManager : MonoBehaviour
         if (itemContextMenu != null) itemContextMenu.SetActive(false);
     }
 
-    public void ShowAskIdButton(NpcController npc)
+    // Adicione esta função para registrar o NPC assim que ele chegar
+    public void SetCurrentNpc(NpcController npc)
     {
         currentNpc = npc;
         hasReturnedID = false;
         
-        if (askIdButton != null) askIdButton.SetActive(true);
-        if (btnDismissNpc != null) btnDismissNpc.SetActive(false); // Esconde ao iniciar
+        // Esconde o botão de dispensar até que o RG seja devolvido
+        if (btnDismissNpc != null) btnDismissNpc.SetActive(false); 
+    }
+
+    // A função OnGiveBackButtonClicked deve estar assim para mostrar o botão de Dispensar:
+    public void OnGiveBackButtonClicked()
+    {
+        itemContextMenu.SetActive(false);
+        if (currentHoveredItem == null) return;
+
+        if (currentHoveredItem.itemType == InteractableDeskItem.ItemType.Document2D)
+        {
+            hasReturnedID = true; 
+            
+            // ATENÇÃO: Aqui o botão de Dispensar reaparece após devolver o RG
+            if (btnDismissNpc != null) btnDismissNpc.SetActive(true);
+            
+            Destroy(currentHoveredItem.gameObject);
+        }
+        else
+        {
+            currentNpc.ReceiveItem(currentHoveredItem.itemID);
+            if (btnDismissNpc != null) btnDismissNpc.SetActive(false); 
+            Destroy(currentHoveredItem.gameObject);
+        }
     }
 
     public void OnAskIdClicked()
@@ -124,28 +148,6 @@ public class UIManager : MonoBehaviour
         if (currentHoveredItem != null) currentHoveredItem.ReturnToShelf();
     }
 
-    public void OnGiveBackButtonClicked()
-    {
-        itemContextMenu.SetActive(false);
-        if (currentHoveredItem == null) return;
-
-        if (currentHoveredItem.itemType == InteractableDeskItem.ItemType.Document2D)
-        {
-            hasReturnedID = true; 
-            
-            // Mostra o botão de expulsar o NPC agora que a identidade foi checada e devolvida
-            if (btnDismissNpc != null) btnDismissNpc.SetActive(true);
-            
-            Destroy(currentHoveredItem.gameObject);
-        }
-        else
-        {
-            // O NPC recebe o item 3D
-            currentNpc.ReceiveItem(currentHoveredItem.itemID);
-            if (btnDismissNpc != null) btnDismissNpc.SetActive(false); // Esconde a UI
-            Destroy(currentHoveredItem.gameObject);
-        }
-    }
 
     public void OnDismissNpcClicked()
     {

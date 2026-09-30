@@ -8,20 +8,36 @@ public class NpcController : MonoBehaviour
     private Transform deskSpawnPoint; 
     private bool idSpawned = false;
 
+    // ...
+    public DialogueNode lastNode; // Guarda a última conversa
+    // ...
+
     private void Start()
     {
         GameObject pontoNaMesa = GameObject.Find("DeskSpawnPoint");
         if (pontoNaMesa != null) deskSpawnPoint = pontoNaMesa.transform;
         else Debug.LogError("ERRO: O NPC não achou o 'DeskSpawnPoint' na cena!");
 
-        // Inicia o sistema de diálogo imersivo chamando a Instância diretamente
+        // 1. Avisa a Interface quem é este NPC (Conserta o bug do "Give Back")
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetCurrentNpc(this);
+        }
+
+        // 2. Inicia o sistema de diálogo
         if (myData.startingNode != null && DialogueManager.Instance != null)
         {
             DialogueManager.Instance.StartDialogue(myData.startingNode, this);
         }
-        else if (DialogueManager.Instance == null)
+    }
+
+    // 3. Detecta o clique no corpo do NPC
+    private void OnMouseDown()
+    {
+        if (lastNode != null && DialogueManager.Instance != null)
         {
-            Debug.LogError("ERRO: O DialogueManager não foi encontrado na cena. Coloque o script em um objeto vazio!");
+            // Reabre o diálogo na última fala registrada
+            DialogueManager.Instance.StartDialogue(lastNode, this);
         }
     }
 
