@@ -48,17 +48,18 @@ public class TypingQTEManager : MonoBehaviour
         inputField.ActivateInputField();
     }
 
-    private void Update()
+   private void Update()
     {
         if (!isActive) return;
 
         timer -= Time.deltaTime;
         if (timerBar != null) timerBar.fillAmount = timer / timeLimit;
 
-        // Puxão físico: Move o item levemente para trás do balcão simulando o NPC puxando
-        if (stolenItem != null)
+        // Puxão físico: Move o item na direção exata do NPC ladrão
+        if (stolenItem != null && thiefNpc != null)
         {
-            stolenItem.transform.position += Camera.main.transform.forward * (Time.deltaTime * 0.8f);
+            Vector3 directionToNpc = (thiefNpc.transform.position - stolenItem.transform.position).normalized;
+            stolenItem.transform.position += directionToNpc * (Time.deltaTime * 0.5f);
         }
 
         // Verifica condição de vitória (ignorando maiúsculas/minúsculas e espaços no fim)
@@ -71,7 +72,6 @@ public class TypingQTEManager : MonoBehaviour
             EndQTE(false);
         }
     }
-
     private void EndQTE(bool success)
     {
         isActive = false;

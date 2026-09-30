@@ -95,18 +95,32 @@ public class NpcController : MonoBehaviour
     }
 
     // Chamado pelo TypingQTEManager
+    // Chamado pelo TypingQTEManager
     public void ResolveSteal(bool playerWon, InteractableDeskItem item)
     {
         if (playerWon)
         {
             ScoreManager.Instance.RegisterAction(true, $"Impediu o roubo de {myData.npcName}.");
+
+            // O player venceu: desfaz o puxão e deixa o item seguro no centro da mesa
+            if (item != null && deskSpawnPoint != null)
+            {
+                item.transform.position = deskSpawnPoint.position;
+            }
+
             if (myData.stealFailNode != null) DialogueManager.Instance.StartDialogue(myData.stealFailNode, this);
             else FinalizeAndLeave();
         }
         else
         {
             ScoreManager.Instance.RegisterAction(false, $"{myData.npcName} conseguiu roubar o item!");
-            if (item != null) Destroy(item.gameObject); // Deleta o item roubado
+            
+            if (item != null) 
+            {
+                // Desativa o item da cena NA MESMA HORA. Isso impede que o CycleManager tente guardá-lo.
+                item.gameObject.SetActive(false); 
+                Destroy(item.gameObject);
+            }
             
             if (myData.stealSuccessNode != null) DialogueManager.Instance.StartDialogue(myData.stealSuccessNode, this);
             else FinalizeAndLeave();
