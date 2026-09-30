@@ -75,8 +75,11 @@ public class DialogueManager : MonoBehaviour
     {
         if (node.choices == null || node.choices.Length == 0)
         {
-            // Cria um botão padrão para fechar caso o node não tenha opções configuradas
-            CreateButton("Sair", null, DialogueAction.CloseDialogue);
+            // Se for nó final, cria botão de ir embora. Senão, cria botão de fechar diálogo.
+            if (node.isFinalNode)
+                CreateButton("...", null, DialogueAction.LeaveQueue);
+            else
+                CreateButton("Sair", null, DialogueAction.CloseDialogue);
             return;
         }
 
@@ -84,6 +87,36 @@ public class DialogueManager : MonoBehaviour
         {
             CreateButton(choice.choiceText, choice.nextNode, choice.action);
         }
+    }
+
+    private void OnChoiceClicked(DialogueNode nextNode, DialogueAction action)
+    {
+        if (isTyping) return; 
+
+        switch (action)
+        {
+            case DialogueAction.AskForID:
+                currentNpc.AskForID();
+                EndDialogue();
+                return;
+
+            case DialogueAction.DismissNPC:
+                currentNpc.RefuseAndDismiss();
+                EndDialogue(); // A função RefuseAndDismiss vai abrir o node final
+                return;
+
+            case DialogueAction.CloseDialogue:
+                EndDialogue();
+                return;
+
+            case DialogueAction.LeaveQueue:
+                currentNpc.FinalizeAndLeave(); // O NPC realmente vai embora aqui
+                EndDialogue();
+                return;
+        }
+
+        if (nextNode != null) DisplayNode(nextNode); 
+        else EndDialogue(); 
     }
 
     private void CreateButton(string text, DialogueNode nextNode, DialogueAction action)
@@ -95,42 +128,6 @@ public class DialogueManager : MonoBehaviour
         btn.onClick.AddListener(() => OnChoiceClicked(nextNode, action));
     }
 
-    private void OnChoiceClicked(DialogueNode nextNode, DialogueAction action)
-    {
-        if (isTyping)
-        {
-            // Opcional: Se clicar enquanto digita, preenche o texto todo de uma vez
-            return; 
-        }
-
-        // Executa a ação da escolha baseada no Enum
-        switch (action)
-        {
-            case DialogueAction.AskForID:
-                currentNpc.AskForID();
-                EndDialogue();
-                return;
-
-            case DialogueAction.DismissNPC:
-                currentNpc.RefuseAndDismiss();
-                EndDialogue();
-                return;
-
-            case DialogueAction.CloseDialogue:
-                EndDialogue();
-                return;
-        }
-
-        // Se a ação for "Nothing", apenas avança para o próximo node
-        if (nextNode != null)
-        {
-            DisplayNode(nextNode); 
-        }
-        else
-        {
-            EndDialogue(); 
-        }
-    }
 
     private void EndDialogue()
     {

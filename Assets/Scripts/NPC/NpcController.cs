@@ -12,6 +12,8 @@ public class NpcController : MonoBehaviour
     public DialogueNode lastNode; // Guarda a última conversa
     // ...
 
+    public bool hasAttemptedSteal = false;
+
     private void Start()
     {
         GameObject pontoNaMesa = GameObject.Find("DeskSpawnPoint");
@@ -53,33 +55,66 @@ public class NpcController : MonoBehaviour
 
     public void ReceiveItem(string givenItemID)
     {
+        DialogueNode nextNode = null;
+
         if (myData.isScammer)
         {
             ScoreManager.Instance.RegisterAction(false, $"Entregou {givenItemID} para o GOLPISTA {myData.npcName}.");
+            nextNode = myData.wrongItemNode;
         }
         else if (givenItemID == myData.correctItemID)
         {
             ScoreManager.Instance.RegisterAction(true, $"Entregou {givenItemID} corretamente para {myData.npcName}.");
+            nextNode = myData.correctItemNode;
         }
         else
         {
-            ScoreManager.Instance.RegisterAction(false, $"Entregou item errado ({givenItemID}) para {myData.npcName} (Esperava {myData.correctItemID}).");
+            ScoreManager.Instance.RegisterAction(false, $"Entregou item errado ({givenItemID}) para {myData.npcName}.");
+            nextNode = myData.wrongItemNode;
         }
 
-        Object.FindAnyObjectByType<CycleManager>().FinishCurrentNpc();
+        // Inicia a fala de despedida
+        if (nextNode != null && DialogueManager.Instance != null)
+            DialogueManager.Instance.StartDialogue(nextNode, this);
+        else
+            FinalizeAndLeave(); // Failsafe caso você esqueça de preencher o Node no Inspector
     }
 
     public void RefuseAndDismiss()
     {
         if (myData.isScammer)
-        {
             ScoreManager.Instance.RegisterAction(true, $"Identificou o golpista {myData.npcName} e o mandou embora.");
+        else
+            ScoreManager.Instance.RegisterAction(false, $"Recusou ajudar o NPC legítimo {myData.npcName}.");
+
+        // Inicia a fala de despedida
+        if (myData.dismissedNode != null && DialogueManager.Instance != null)
+            DialogueManager.Instance.StartDialogue(myData.dismissedNode, this);
+        else
+            FinalizeAndLeave();
+    }
+
+    // Chamado pelo TypingQTEManager
+    public void ResolveSteal(bool playerWon, InteractableDeskItem item)
+    {
+        if (playerWon)
+        {
+            ScoreManager.Instance.RegisterAction(true, $"Impediu o roubo de {myData.npcName}.");
+            if (myData.stealFailNode != null) DialogueManager.Instance.StartDialogue(myData.stealFailNode, this);
+            else FinalizeAndLeave();
         }
         else
         {
-            ScoreManager.Instance.RegisterAction(false, $"Recusou ajudar o NPC legítimo {myData.npcName}. Ele foi embora triste.");
+            ScoreManager.Instance.RegisterAction(false, $"{myData.npcName} conseguiu roubar o item!");
+            if (item != null) Destroy(item.gameObject); // Deleta o item roubado
+            
+            if (myData.stealSuccessNode != null) DialogueManager.Instance.StartDialogue(myData.stealSuccessNode, this);
+            else FinalizeAndLeave();
         }
+    }
 
+    public void FinalizeAndLeave()
+    {
         Object.FindAnyObjectByType<CycleManager>().FinishCurrentNpc();
     }
 }

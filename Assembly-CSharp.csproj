@@ -57,6 +57,7 @@
     <Compile Include="Assets\Scripts\Itens\DraggableInspectUI.cs" />
     <Compile Include="Assets\Scripts\DialogueManager\DialogueManager.cs" />
     <Compile Include="Assets\Scripts\NPC\NpcData.cs" />
+    <Compile Include="Assets\Scripts\Qte\TypingQTEManager.cs" />
     <Compile Include="Assets\Scripts\CycleManager\CycleManager.cs" />
     <Compile Include="Assets\InputSystem_Actions.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />

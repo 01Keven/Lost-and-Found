@@ -4,16 +4,24 @@ using UnityEngine;
 public class NpcData : ScriptableObject
 {
     public string npcName;
-    [Header("Narrativa")]
-    public DialogueNode startingNode; // O node que puxa toda a árvore de conversa inicial
     
+    [Header("Árvore Inicial")]
+    public DialogueNode startingNode; 
+    
+    [Header("Finais de Diálogo (Devem ter 'Is Final Node' = TRUE)")]
+    public DialogueNode correctItemNode;
+    public DialogueNode wrongItemNode;
+    public DialogueNode dismissedNode;
+
     [Header("Objetivos & Golpistas")]
-    [Tooltip("Marque como TRUE se este NPC não perdeu nada e só quer roubar itens")]
     public bool isScammer; 
-    
-    [Tooltip("O ID do item correto. Deixe vazio se for um golpista.")]
     public string correctItemID; 
     
+    [Header("Mecânica de Roubo (QTE)")]
+    public bool willTryToSteal; // TRUE se ele tenta roubar o item ao colocá-lo na mesa
+    public DialogueNode stealSuccessNode;
+    public DialogueNode stealFailNode;
+
     [Header("Documentos")]
     public GameObject idCardPrefab;
 }

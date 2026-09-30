@@ -139,7 +139,21 @@ public class UIManager : MonoBehaviour
     public void OnPutOnTableButtonClicked()
     {
         itemContextMenu.SetActive(false);
-        if (currentHoveredItem != null) currentHoveredItem.MoveToDesk(deskItemSpawnPoint);
+        if (currentHoveredItem != null) 
+        {
+            currentHoveredItem.MoveToDesk(deskItemSpawnPoint);
+            
+            // VERIFICAÇÃO DE ROUBO
+            if (currentNpc != null && currentNpc.myData.willTryToSteal && !currentNpc.hasAttemptedSteal)
+            {
+                currentNpc.hasAttemptedSteal = true; // Marca que já tentou roubar
+                
+                if (TypingQTEManager.Instance != null)
+                {
+                    TypingQTEManager.Instance.StartQTE(currentNpc, currentHoveredItem);
+                }
+            }
+        }
     }
 
     public void OnReturnToShelfButtonClicked()
