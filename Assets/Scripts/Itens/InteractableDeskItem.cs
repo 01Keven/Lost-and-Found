@@ -65,6 +65,9 @@ public class InteractableDeskItem : MonoBehaviour
 
     private void OnMouseDown()
     {
+        // SE A TRAVA ESTIVER ATIVA, CANCELA A AÇÃO IMEDIATAMENTE
+        if (DialogueManager.Instance != null && DialogueManager.Instance.isDialogueActive) return;
+
         if (currentLocation != ItemLocation.OnDesk) return; // Só arrasta se estiver na mesa
 
         isDragging = true;
@@ -75,6 +78,18 @@ public class InteractableDeskItem : MonoBehaviour
         if (deskPlane.Raycast(ray, out float distance))
         {
             offset = transform.position - ray.GetPoint(distance);
+        }
+    }
+
+    private void OnMouseOver()
+    {
+        // SE A TRAVA ESTIVER ATIVA, CANCELA A AÇÃO
+        if (DialogueManager.Instance != null && DialogueManager.Instance.isDialogueActive) return;
+
+        // Abre o menu de opções com botão direito (apenas se não estiver inspecionando)
+        if (currentLocation != ItemLocation.Inspecting && Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame) 
+        {
+            if (UIManager.Instance != null) UIManager.Instance.OpenItemContextMenu(this);
         }
     }
 
@@ -95,16 +110,7 @@ public class InteractableDeskItem : MonoBehaviour
         }
     }
 
-    private void OnMouseOver()
-    {
-        // Abre o menu de opções com botão direito (apenas se não estiver inspecionando)
-        if (currentLocation != ItemLocation.Inspecting && Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame) 
-        {
-            if (UIManager.Instance != null) UIManager.Instance.OpenItemContextMenu(this);
-        }
-    }
-
-    // --- MÉTODOS DE ESTADO (Chamados pelo UIManager) ---
+    
 
     public void MoveToDesk(Transform deskSpawnPoint)
     {

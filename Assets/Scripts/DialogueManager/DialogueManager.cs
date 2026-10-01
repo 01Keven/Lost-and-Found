@@ -24,6 +24,8 @@ public class DialogueManager : MonoBehaviour
     private Coroutine typingCoroutine;
     private bool isTyping = false;
 
+    public bool isDialogueActive = false;
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -35,8 +37,13 @@ public class DialogueManager : MonoBehaviour
     // Agora recebe o NpcController para saber quem está executando as ações
     public void StartDialogue(DialogueNode startingNode, NpcController npc)
     {
+        isDialogueActive = true; // LIGA A TRAVA
+        
         currentNpc = npc;
         dialoguePanel.SetActive(true);
+        
+        if (CameraController.Instance != null) CameraController.Instance.ZoomIn();
+        
         DisplayNode(startingNode);
     }
 
@@ -128,6 +135,10 @@ public class DialogueManager : MonoBehaviour
 
     private void EndDialogue()
     {
+        isDialogueActive = false; // DESLIGA A TRAVA
+        
         dialoguePanel.SetActive(false);
+        
+        if (CameraController.Instance != null) CameraController.Instance.ZoomOut();
     }
 }

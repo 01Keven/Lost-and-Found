@@ -8,11 +8,14 @@ public class CycleStarter : MonoBehaviour
 
     private void OnMouseDown()
     {
+        // SE A TRAVA ESTIVER ATIVA, CANCELA A AÇÃO
+        if (DialogueManager.Instance != null && DialogueManager.Instance.isDialogueActive) return;
+
         Debug.Log("DEBUG: Objeto 3D clicado!");
         
         if (cycleManager != null)
         {
-            cycleManager.OnStarterObjectClicked(); // Chama a função lógica de estados
+            cycleManager.OnStarterObjectClicked();
         }
         else
         {

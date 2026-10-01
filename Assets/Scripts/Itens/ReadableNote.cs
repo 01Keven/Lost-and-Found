@@ -8,6 +8,8 @@ public class ReadableNote : MonoBehaviour
 
     private void OnMouseDown()
     {
+        if (DialogueManager.Instance != null && DialogueManager.Instance.isDialogueActive) return;
+        
         if (UIManager.Instance != null)
         {
             UIManager.Instance.OpenNoteUI(noteImage2D);
