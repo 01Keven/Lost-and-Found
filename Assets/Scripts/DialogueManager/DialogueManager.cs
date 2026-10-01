@@ -42,9 +42,6 @@ public class DialogueManager : MonoBehaviour
 
     public void DisplayNode(DialogueNode node)
     {
-        // 1. Salva o nó atual no NPC para ele lembrar se o player clicar nele
-        if (currentNpc != null) currentNpc.lastNode = node;
-
         foreach (Transform child in choicesContainer.transform)
         {
             Destroy(child.gameObject);

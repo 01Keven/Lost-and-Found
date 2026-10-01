@@ -8,10 +8,6 @@ public class NpcController : MonoBehaviour
     private Transform deskSpawnPoint; 
     private bool idSpawned = false;
 
-    // ...
-    public DialogueNode lastNode; // Guarda a última conversa
-    // ...
-
     public bool hasAttemptedSteal = false;
 
     private void Start()
@@ -20,7 +16,7 @@ public class NpcController : MonoBehaviour
         if (pontoNaMesa != null) deskSpawnPoint = pontoNaMesa.transform;
         else Debug.LogError("ERRO: O NPC não achou o 'DeskSpawnPoint' na cena!");
 
-        // 1. Avisa a Interface quem é este NPC (Conserta o bug do "Give Back")
+        // 1. Avisa a Interface quem é este NPC
         if (UIManager.Instance != null)
         {
             UIManager.Instance.SetCurrentNpc(this);
@@ -30,16 +26,6 @@ public class NpcController : MonoBehaviour
         if (myData.startingNode != null && DialogueManager.Instance != null)
         {
             DialogueManager.Instance.StartDialogue(myData.startingNode, this);
-        }
-    }
-
-    // 3. Detecta o clique no corpo do NPC
-    private void OnMouseDown()
-    {
-        if (lastNode != null && DialogueManager.Instance != null)
-        {
-            // Reabre o diálogo na última fala registrada
-            DialogueManager.Instance.StartDialogue(lastNode, this);
         }
     }
 
@@ -73,11 +59,10 @@ public class NpcController : MonoBehaviour
             nextNode = myData.wrongItemNode;
         }
 
-        // Inicia a fala de despedida
         if (nextNode != null && DialogueManager.Instance != null)
             DialogueManager.Instance.StartDialogue(nextNode, this);
         else
-            FinalizeAndLeave(); // Failsafe caso você esqueça de preencher o Node no Inspector
+            FinalizeAndLeave(); 
     }
 
     public void RefuseAndDismiss()
@@ -87,22 +72,18 @@ public class NpcController : MonoBehaviour
         else
             ScoreManager.Instance.RegisterAction(false, $"Recusou ajudar o NPC legítimo {myData.npcName}.");
 
-        // Inicia a fala de despedida
         if (myData.dismissedNode != null && DialogueManager.Instance != null)
             DialogueManager.Instance.StartDialogue(myData.dismissedNode, this);
         else
             FinalizeAndLeave();
     }
 
-    // Chamado pelo TypingQTEManager
-    // Chamado pelo TypingQTEManager
     public void ResolveSteal(bool playerWon, InteractableDeskItem item)
     {
         if (playerWon)
         {
             ScoreManager.Instance.RegisterAction(true, $"Impediu o roubo de {myData.npcName}.");
 
-            // O player venceu: desfaz o puxão e deixa o item seguro no centro da mesa
             if (item != null && deskSpawnPoint != null)
             {
                 item.transform.position = deskSpawnPoint.position;
@@ -117,7 +98,6 @@ public class NpcController : MonoBehaviour
             
             if (item != null) 
             {
-                // Desativa o item da cena NA MESMA HORA. Isso impede que o CycleManager tente guardá-lo.
                 item.gameObject.SetActive(false); 
                 Destroy(item.gameObject);
             }
@@ -130,5 +110,27 @@ public class NpcController : MonoBehaviour
     public void FinalizeAndLeave()
     {
         Object.FindAnyObjectByType<CycleManager>().FinishCurrentNpc();
+    }
+
+    public void HandleIdDestroyed()
+    {
+        if (!myData.isScammer && !myData.willTryToSteal)
+        {
+            ScoreManager.Instance.RegisterAction(false, $"Destruiu a identidade do NPC legítimo {myData.npcName}.");
+            
+            if (myData.idDestroyedNode != null && DialogueManager.Instance != null)
+            {
+                DialogueManager.Instance.StartDialogue(myData.idDestroyedNode, this);
+            }
+            else
+            {
+                FinalizeAndLeave();
+            }
+        }
+        else
+        {
+            ScoreManager.Instance.RegisterAction(true, $"Destruiu o documento falso de {myData.npcName}.");
+            FinalizeAndLeave(); 
+        }
     }
 }

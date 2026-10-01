@@ -22,11 +22,14 @@ public class UIManager : MonoBehaviour
     public GameObject btnReturnToShelf;
     public GameObject btnGiveBack;
     public GameObject btnDismissNpc;
-
+    [Header("Área de Descarte")]
+    public GameObject btnTrashId; // Arraste o botão de Excluir do Canvas aqui
+    private InteractableDeskItem itemInTrashZone;
     private InteractableDeskItem currentHoveredItem;
 
     private void Awake()
     {
+        if (btnTrashId != null) btnTrashId.SetActive(false);
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
         
@@ -172,6 +175,37 @@ public class UIManager : MonoBehaviour
             // Esconde os elementos da UI após o uso
             btnDismissNpc.SetActive(false); 
             itemContextMenu.SetActive(false); // Garante que o menu do item fecha para evitar cliques fantasmas
+        }
+    }
+
+    public void ShowTrashButton(InteractableDeskItem item)
+    {
+        itemInTrashZone = item;
+        if (btnTrashId != null) btnTrashId.SetActive(true);
+    }
+
+    public void HideTrashButton(InteractableDeskItem item)
+    {
+        if (itemInTrashZone == item)
+        {
+            itemInTrashZone = null;
+            if (btnTrashId != null) btnTrashId.SetActive(false);
+        }
+    }
+
+    // Vincule esta função ao evento OnClick() do botão de Lixeira no Canvas
+    public void OnTrashIdClicked()
+    {
+        if (itemInTrashZone != null)
+        {
+            Destroy(itemInTrashZone.gameObject); // Destrói o objeto 3D da identidade
+            if (btnTrashId != null) btnTrashId.SetActive(false);
+
+            // Verifica se o NPC ainda está lá (se ele já fugiu no roubo, currentNpc será nulo e a mesa só é limpa)
+            if (currentNpc != null)
+            {
+                currentNpc.HandleIdDestroyed();
+            }
         }
     }
 }

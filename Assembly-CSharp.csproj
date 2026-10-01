@@ -66,6 +66,7 @@
     <Compile Include="Assets\Scripts\Player\ScoreManager.cs" />
     <Compile Include="Assets\Scripts\DialogueManager\DialogueNode.cs" />
     <Compile Include="Assets\Scripts\NPC\NpcController.cs" />
+    <Compile Include="Assets\Scripts\Itens\TrashZone.cs" />
     <Compile Include="Assets\Scripts\CycleManager\CycleStarter.cs" />
     <Compile Include="Assets\Scripts\Player\CameraToggleTrigger.cs" />
   </ItemGroup>

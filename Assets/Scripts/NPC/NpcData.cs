@@ -24,4 +24,6 @@ public class NpcData : ScriptableObject
 
     [Header("Documentos")]
     public GameObject idCardPrefab;
+    [Tooltip("Fala do NPC caso o jogador jogue o documento dele fora")]
+    public DialogueNode idDestroyedNode;
 }
