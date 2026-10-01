@@ -208,4 +208,14 @@ public class UIManager : MonoBehaviour
             }
         }
     }
+
+    // Função chamada pelo ReadableNote.cs
+    public void OpenNoteUI(Sprite noteImage)
+    {
+        if (inspectUIWindow != null)
+        {
+            // Usa a janela de inspeção existente, mas com a função que não apaga o objeto 3D
+            inspectUIWindow.ShowStaticNote(noteImage);
+        }
+    }
 }

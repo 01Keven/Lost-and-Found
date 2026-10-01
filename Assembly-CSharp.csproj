@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Player\CameraController.cs" />
     <Compile Include="Assets\Scripts\Itens\DraggableInspectUI.cs" />
+    <Compile Include="Assets\Scripts\Itens\ReadableNote.cs" />
     <Compile Include="Assets\Scripts\DialogueManager\DialogueManager.cs" />
     <Compile Include="Assets\Scripts\NPC\NpcData.cs" />
     <Compile Include="Assets\Scripts\Qte\TypingQTEManager.cs" />

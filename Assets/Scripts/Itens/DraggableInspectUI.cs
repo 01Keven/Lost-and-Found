@@ -14,7 +14,7 @@ public class DraggableInspectUI : MonoBehaviour, IDragHandler, IPointerDownHandl
         rectTransform = GetComponent<RectTransform>();
     }
 
-    // Chamado pelo UIManager para exibir a tela
+    // 1. Usado para as Identidades (Oculta o item 3D)
     public void Show(InteractableDeskItem item3D)
     {
         linked3DItem = item3D;
@@ -27,13 +27,24 @@ public class DraggableInspectUI : MonoBehaviour, IDragHandler, IPointerDownHandl
         gameObject.SetActive(true);
     }
 
-    // Permite arrastar a UI pela tela
+    // 2. NOVA FUNÇÃO: Usado para papéis soltos/manuais (Não oculta o 3D)
+    public void ShowStaticNote(Sprite noteSprite)
+    {
+        linked3DItem = null; // Garante que não há vínculo de desaparecimento
+        
+        if (noteSprite != null && displayImage != null)
+        {
+            displayImage.sprite = noteSprite;
+        }
+        
+        gameObject.SetActive(true);
+    }
+
     public void OnDrag(PointerEventData eventData)
     {
         rectTransform.anchoredPosition += eventData.delta;
     }
 
-    // Traz a janela para a frente se houver outras UIs
     public void OnPointerDown(PointerEventData eventData)
     {
         rectTransform.SetAsLastSibling(); 
@@ -41,7 +52,6 @@ public class DraggableInspectUI : MonoBehaviour, IDragHandler, IPointerDownHandl
 
     private void Update()
     {
-        // Fecha com o clique direito do mouse se estiver ativo
         if (gameObject.activeSelf && Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
         {
             Close();
@@ -52,7 +62,7 @@ public class DraggableInspectUI : MonoBehaviour, IDragHandler, IPointerDownHandl
     {
         gameObject.SetActive(false);
         
-        // Faz o item 3D da mesa reaparecer
+        // Só tenta reativar se for uma identidade que estava vinculada
         if (linked3DItem != null)
         {
             linked3DItem.gameObject.SetActive(true);
