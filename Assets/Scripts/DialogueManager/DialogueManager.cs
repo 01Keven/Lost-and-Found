@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-
+using UnityEngine.InputSystem;
 public class DialogueManager : MonoBehaviour
 {
     public static DialogueManager Instance; 
@@ -26,6 +26,9 @@ public class DialogueManager : MonoBehaviour
 
     public bool isDialogueActive = false;
 
+    // NOVO: Guarda a referência do nó atual para podermos puxar o texto completo
+    private DialogueNode currentNode; 
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -34,10 +37,19 @@ public class DialogueManager : MonoBehaviour
         dialoguePanel.SetActive(false);
     }
 
-    // Agora recebe o NpcController para saber quem está executando as ações
+    // NOVO: Verifica cliques enquanto o texto está sendo digitado
+    private void Update()
+    {
+        // Verifica o clique usando o Novo Input System
+        if (isTyping && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            CompleteTextInstantly();
+        }
+    }
+
     public void StartDialogue(DialogueNode startingNode, NpcController npc)
     {
-        isDialogueActive = true; // LIGA A TRAVA
+        isDialogueActive = true; 
         
         currentNpc = npc;
         dialoguePanel.SetActive(true);
@@ -49,6 +61,8 @@ public class DialogueManager : MonoBehaviour
 
     public void DisplayNode(DialogueNode node)
     {
+        currentNode = node; // NOVO: Salva o nó atual
+
         foreach (Transform child in choicesContainer.transform)
         {
             Destroy(child.gameObject);
@@ -75,11 +89,21 @@ public class DialogueManager : MonoBehaviour
         ShowChoices(node);
     }
 
+    // NOVO: Função que cancela a digitação lenta e mostra tudo de uma vez
+    private void CompleteTextInstantly()
+    {
+        if (typingCoroutine != null) StopCoroutine(typingCoroutine);
+        
+        dialogueText.text = currentNode.dialogueText; // Coloca o texto inteiro
+        isTyping = false;
+        
+        ShowChoices(currentNode); // Mostra os botões imediatamente
+    }
+
     private void ShowChoices(DialogueNode node)
     {
         if (node.choices == null || node.choices.Length == 0)
         {
-            // Se for nó final, cria botão de ir embora. Senão, cria botão de fechar diálogo.
             if (node.isFinalNode)
                 CreateButton("...", null, DialogueAction.LeaveQueue);
             else
@@ -106,7 +130,7 @@ public class DialogueManager : MonoBehaviour
 
             case DialogueAction.DismissNPC:
                 currentNpc.RefuseAndDismiss();
-                EndDialogue(); // A função RefuseAndDismiss vai abrir o node final
+                EndDialogue(); 
                 return;
 
             case DialogueAction.CloseDialogue:
@@ -114,7 +138,7 @@ public class DialogueManager : MonoBehaviour
                 return;
 
             case DialogueAction.LeaveQueue:
-                currentNpc.FinalizeAndLeave(); // O NPC realmente vai embora aqui
+                currentNpc.FinalizeAndLeave(); 
                 EndDialogue();
                 return;
         }
@@ -132,10 +156,9 @@ public class DialogueManager : MonoBehaviour
         btn.onClick.AddListener(() => OnChoiceClicked(nextNode, action));
     }
 
-
     private void EndDialogue()
     {
-        isDialogueActive = false; // DESLIGA A TRAVA
+        isDialogueActive = false; 
         
         dialoguePanel.SetActive(false);
         
